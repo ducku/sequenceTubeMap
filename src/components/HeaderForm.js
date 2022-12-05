@@ -20,6 +20,12 @@ const dataTypes = {
   MOUNTED_FILES: "mounted files",
   EXAMPLES: "examples",
 };
+const fileTypes = {
+  GRAPH: "graph",
+  HAPLOTYPE: "haplotype",
+  READ: "read",
+  BED:"bed",
+};
 
 // We define the subset of the empty state that is safe to apply without
 // clobbering downloaded data from the server which we need
@@ -67,6 +73,22 @@ const EMPTY_STATE = {
   gamSelectOptions: ["none"],
   bedSelectOptions: ["none"],
 };
+
+// Creates track to be stored in ViewTarget
+// Modify as the track system changes
+function create_track(graphFile, gbwtFile, gamFile, bedFile) {
+  const files = [{name: graphFile, type: fileTypes.GRAPH}, 
+                 {name: gbwtFile, type: fileTypes.HAPLOTYPE}, 
+                 {name: gamFile, type: fileTypes.READ}, 
+                 {name: bedFile, type: fileTypes.BED}]
+
+  //remove empty files here?
+
+  const track = {
+    files: files,
+  };
+  return track;
+}
 
 class HeaderForm extends Component {
   state = EMPTY_STATE;
@@ -300,6 +322,7 @@ class HeaderForm extends Component {
     }
   };
   getNextViewTarget = () => ({
+    tracks: new Array(create_track(this.state.graphFile, this.state.gbwtFile, this.state.gamFile, this.state.bedFile)),
     name: this.state.name,
     region: this.state.region,
     graphFile: this.state.graphFile,

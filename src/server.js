@@ -48,6 +48,13 @@ const GRAPH_EXTENSIONS = [
   ".gbz"
 ]
 
+const fileTypes = {
+  GRAPH: "graph",
+  HAPLOTYPE: "haplotype",
+  READ: "read",
+  BED:"bed",
+};
+
 // Make sure that the scratch directory exists at startup, so multiple requests
 // can't fight over its creation.
 fs.mkdirSync(SCRATCH_DATA_PATH, { recursive: true });
@@ -164,6 +171,7 @@ function indexGamSorted(req, res) {
   });
 }
 
+// Checks if a file has one of the extensions provided
 function endsWithExtensions(file, extensions) {
   for (const extension of extensions) {
     if (file.endsWith(extension)) {
@@ -171,6 +179,19 @@ function endsWithExtensions(file, extensions) {
     }
   }
   return false;
+}
+
+// INPUT: (track {files: }, string)
+// OUTPUT: string
+// Assuming there's at most 1 type of file per track,
+// returns the file name of the specified type in that track
+function getFileFromType(track, type) {
+  for (const file of track.files) {
+    if (file.type == type) {
+      return file.name;
+    }
+  }
+  return "none";
 }
 
 api.post("/getChunkedData", (req, res, next) => {
@@ -193,11 +214,21 @@ api.post("/getChunkedData", (req, res, next) => {
   // This request owns the directory, so clean it up when the request finishes.
   req.rmChunk = true;
 
+
+  // TODO: loop through tracks and process each track
+
+
+  console.log(req.body)
+  const track = req.body.tracks[0];
+  const graphFile = getFileFromType(track, fileTypes.GRAPH);
+  const gbwtFile = getFileFromType(track, fileTypes.HAPLOTYPE);
+  const gamFile = getFileFromType(track, fileTypes.READ);
+  const bedFile = getFileFromType(track, fileTypes.BED);
+
   // We always have an graph file
-  const graphFile = req.body.graphFile;
+  //const graphFile = req.body.graphFile;
 
   // We sometimes have a GAM file with reads
-  const gamFile = req.body.gamFile;
   req.withGam = true;
   if (!gamFile || gamFile === "none") {
     req.withGam = false;
@@ -205,7 +236,6 @@ api.post("/getChunkedData", (req, res, next) => {
   }
 
   // We sometimes have a GBWT with haplotypes that override any in the graph file
-  const gbwtFile = req.body.gbwtFile;
   req.withGbwt = true;
   if (!gbwtFile || gbwtFile === "none") {
     req.withGbwt = false;
@@ -213,7 +243,6 @@ api.post("/getChunkedData", (req, res, next) => {
   }
 
   // We sometimes have a BED file with regions to look at
-  const bedFile = req.body.bedFile;
   req.withBed = true;
   if (!bedFile || bedFile === "none") {
     req.withBed = false;
